@@ -1,29 +1,20 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 public class SLAEHandler {
-    /**
-     * Метод вычисляет неизвестные переменные поступившей СЛАУ и возвращает их в виде массива.
-     * В случае отсутсвия единственного решения возвращает null
-     * @param systemLinearAlgebraicEquation должен быть ненулевым, иначе бросится исключение.
-     */
-    public static BigDecimal[] computeX(SystemLinearAlgebraicEquation systemLinearAlgebraicEquation){
-
+    public static BigDecimal[] computeXg(SystemLinearAlgebraicEquation systemLinearAlgebraicEquation){
         BigDecimal[] xs;
         try {
             if (systemLinearAlgebraicEquation == null) throw new NullPointerException();
             BigDecimal[][]  matrix      = systemLinearAlgebraicEquation.getMatrix();
             BigDecimal[]    freeTerms   = systemLinearAlgebraicEquation.getFreeTerms();
             xs                          = new BigDecimal[freeTerms.length];
-
             ///Выстраиваем треугольную матрицу
-            final int scale = 4;
+            final int scale = 10;
             if(!toTriangularMatrix(matrix, freeTerms, scale))
                 return null;
             ///Отображаем треугольную матрицу
             System.out.println("\n\tTriangular matrix:\n");
             showSLAE(new SystemLinearAlgebraicEquation(matrix,freeTerms));
-
             for (int i = xs.length - 1; i >= 0; i--){
                 xs[i] = new BigDecimal(0);
                 xs[i] = xs[i].add(freeTerms[i]);
@@ -36,17 +27,34 @@ public class SLAEHandler {
             System.out.println("SLAE must not be nullptr");
             xs = null;
         }
-
         return xs;
     }
 
-    /**
-     * Метод преобразовывающий расширенную матрицу в треугольную расширенную матрицу
-     * @param matrix        матрица аргументов
-     * @param freeTerms     столбец свободных членов
-     * @param scale         число знаков после запятой
-     * @return              в случае успеха возвращает true, в случае невозможности - false, не нагружен восстановлением
-     */
+    public static BigDecimal[] computeXzg(SystemLinearAlgebraicEquation systemLinearAlgebraicEquation){
+        long millis = System.nanoTime();
+        try {
+            if (systemLinearAlgebraicEquation == null) throw new NullPointerException();
+            BigDecimal[][]  matrix      = systemLinearAlgebraicEquation.getMatrix();
+            BigDecimal[]    freeTerms   = systemLinearAlgebraicEquation.getFreeTerms();
+            final int scale = 10;
+            if(!toDiagonalMatrix(matrix, freeTerms, scale))
+                return null;
+            for (int i = 0; i < freeTerms.length; i++){
+                if (matrix[i][i].equals(new BigDecimal(0)) && !(matrix[i][i].equals(freeTerms[i])))
+                    return null;
+                else
+                    freeTerms[i] = freeTerms[i].divide(matrix[i][i], scale, RoundingMode.UP);
+            }
+            System.out.println("\n\tDiagonal matrix:\n");
+            showSLAE(new SystemLinearAlgebraicEquation(matrix,freeTerms));
+            System.out.println("Timer: " + (1.0*(System.nanoTime() - millis)/1000000));
+            return freeTerms;
+        }catch (NullPointerException exception){
+            System.out.println("SLAE must not be nullptr");
+        }
+        return null;
+    }
+
     public static boolean toTriangularMatrix(BigDecimal[][] matrix, BigDecimal[] freeTerms, int scale){
         for (int i = 0; i < freeTerms.length; i++){
             if (matrix[i][i].equals(new BigDecimal(0)))
@@ -68,15 +76,27 @@ public class SLAEHandler {
         return true;
     }
 
-    /**
-     * Метод складывающий две строки в расширенной матрице, переданной в виде матрицы и столбца свободных членов
-     * @param matrix        матрица аргументов расширенной матрицы не должна быть нулевой
-     * @param freeTerms     столбце свободных членов расширенной матрицы не должен быть нулевым
-     * @param rowFrom       номер строки, которую мы складываем
-     * @param rowTo         номер строки, к которой мы складываем
-     * @param multiplier    множитель складываемой строки
-     */
+    public static boolean toDiagonalMatrix(BigDecimal[][] matrix, BigDecimal[] freeTerms, int scale){
+        for (int i = 0; i < freeTerms.length; i++){
+            if (matrix[i][i].equals(new BigDecimal(0)))
+                for (int j = i + 1; j < freeTerms.length; j++){
+                    if (!matrix[j][i].equals(new BigDecimal(0))){
+                        addrows(matrix, freeTerms, j, i, new BigDecimal(1));
+                        break;
+                    }
+                    return false;
+                }
+            for (int j = 0; j < freeTerms.length; j++){
+                if (j != i && !matrix[j][i].equals(new BigDecimal(0)))
+                    addrows(matrix, freeTerms, i, j, matrix[j][i]
+                            .divide(matrix[i][i], scale, RoundingMode.UP).multiply(new BigDecimal(-1)));
+            }
+        }
+        return true;
+    }
+
     public static void addrows(BigDecimal[][] matrix, BigDecimal[] freeTerms, int rowFrom, int rowTo, BigDecimal multiplier) {
+    /*
         if (matrix == null) {
             System.out.println("Canceled. Matrix is nullptr.");
             return;
@@ -97,29 +117,29 @@ public class SLAEHandler {
             System.out.println("Canceled. RowTo is out of bounders.");
             return;
         }
-
+    */
         for (int i = 0; i < matrix.length; i++){
-            matrix[rowTo][i] = matrix[rowTo][i].add(matrix[rowFrom][i].multiply(multiplier));
+            BigDecimal bd = matrix[rowTo][i];
+            BigDecimal db = matrix[rowFrom][i];
+            db = db.multiply(multiplier);
+            bd = bd.add(db);
+            //matrix[rowTo][i] = matrix[rowTo][i].add(matrix[rowFrom][i].multiply(multiplier));
+            matrix[rowTo][i] = bd;
         }
         freeTerms[rowTo] = freeTerms[rowTo].add(freeTerms[rowFrom].multiply(multiplier));
     }
 
-    /**
-     * Выводит на экрран польхователю СЛАУ на основе переданного СЛАУ
-     * @param systemLinearAlgebraicEquation должен быть ненулевым, иначе бросится исключение
-     */
     public static void showSLAE(SystemLinearAlgebraicEquation systemLinearAlgebraicEquation) throws NullPointerException{
         if (systemLinearAlgebraicEquation == null) throw new NullPointerException();
-
         BigDecimal[][] matrix   = systemLinearAlgebraicEquation.getMatrix();
         BigDecimal[] freeTerms  = systemLinearAlgebraicEquation.getFreeTerms();
         int size                = matrix.length;
-
         for (int i = 0; i < size; i++){
             for (int j = 0; j < size; j++){
-                System.out.print(matrix[i][j] + "x" + j + " ");
+                //System.out.print(matrix[i][j].setScale(4, RoundingMode.HALF_DOWN) + "x" + j + " ");
+                System.out.print("\t" + ((matrix[i][j].compareTo(new BigDecimal("0")) == -1) ? "" : "+") + matrix[i][j].setScale(4, RoundingMode.HALF_DOWN) + "_x" + (j + 1) + " ");
             }
-            System.out.println("= " + freeTerms[i]);
+            System.out.println("= " + ((freeTerms[i].compareTo(new BigDecimal("0")) == -1) ? "" : "+") + freeTerms[i].setScale(4, RoundingMode.HALF_DOWN));
         }
     }
 }

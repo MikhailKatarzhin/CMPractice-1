@@ -29,6 +29,7 @@ public class SLAEalHandler {
         return null;
     }
     public static boolean toDiagonalMatrix(ArrayList<ArrayList<BigDecimal>> matrix, ArrayList<BigDecimal> freeTerms, int scale){
+        int cores = Runtime.getRuntime().availableProcessors();
         for (int i = 0; i < freeTerms.size(); i++){
             if (matrix.get(i).get(i).equals(new BigDecimal(0)))
                 for (int j = i + 1; j < freeTerms.size(); j++){
@@ -39,14 +40,39 @@ public class SLAEalHandler {
                     return false;
                 }
             for (int j = 0; j < freeTerms.size(); j++){
-                if (j != i && !matrix.get(j).get(i).equals(new BigDecimal(0)))
+                AddRunnable runnable = new AddRunnable(matrix, freeTerms, scale, i, j);
+                new Thread(runnable).start();
+                while (java.lang.Thread.activeCount() == cores){}
+                /*if (j != i && !matrix.get(j).get(i).equals(new BigDecimal(0)))
                     addrows(matrix, freeTerms, i, j, matrix.get(j).get(i)
                             .divide(matrix.get(i).get(i), scale, RoundingMode.UP).multiply(new BigDecimal(-1)));
+
+                 */
             }
         }
         return true;
     }
 
+    public static class AddRunnable implements Runnable {
+
+        ArrayList<ArrayList<BigDecimal>> matrix;
+        ArrayList<BigDecimal> freeTerms;
+        int scale, i, j;
+
+        public AddRunnable(ArrayList<ArrayList<BigDecimal>> matrix, ArrayList<BigDecimal> freeTerms, int scale, int i, int j) {
+            this.matrix = matrix;
+            this.freeTerms = freeTerms;
+            this.scale = scale;
+            this.i = i;
+            this.j = j;
+        }
+
+        public void run() {
+            if(j != i && !matrix.get(j).get(i).equals(new BigDecimal(0)))
+                addrows(matrix, freeTerms, i, j, matrix.get(j).get(i)
+                    .divide(matrix.get(i).get(i), scale, RoundingMode.UP).multiply(new BigDecimal(-1)));
+        }
+    }
     public static void addrows(ArrayList<ArrayList<BigDecimal>> matrix, ArrayList<BigDecimal> freeTerms, int rowFrom, int rowTo, BigDecimal multiplier) {
     /*
         if (matrix == null) {

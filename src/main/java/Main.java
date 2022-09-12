@@ -11,20 +11,21 @@ public class Main {
 
         File file = new File("C:\\Users\\maikl\\Documents\\GitHub\\CMPractice-1\\src\\main\\java\\input.txt");
         try (Scanner sc = new Scanner(file)){
-            String line = sc.nextLine();
 
-            final int n = Integer.parseInt(line);
+            final int n = 250;
+            //final int n = Integer.parseInt(sc.nextLine());
             ArrayList<ArrayList<BigDecimal>> matrix = new ArrayList<>(n);
             ArrayList<BigDecimal> freeTerms = new ArrayList<>(n);
 
             for (int i = 0; i < n; i++){
                 matrix.add(new ArrayList<BigDecimal>(n));
-                line = sc.nextLine();
-                String[] sublines = line.split(" ", n+1);
+                //String[] sublines = sc.nextLine().split(" ", n+1);
                 for (int j = 0; j < n; j++){
-                    matrix.get(i).add(new BigDecimal(Integer.parseInt(sublines[j])));
+                    //matrix.get(i).add(new BigDecimal(Integer.parseInt(sublines[j])));
+                    matrix.get(i).add(new BigDecimal((int)(Math.random()*100)));
                 }
-                freeTerms.add(new BigDecimal(Integer.parseInt(sublines[n])));
+                //freeTerms.add(new BigDecimal(Integer.parseInt(sublines[n])));
+                freeTerms.add(new BigDecimal((int)(Math.random()*100)));
             }
 
             ///создаём СЛАУ на основе матрицы и столбце свободных членов

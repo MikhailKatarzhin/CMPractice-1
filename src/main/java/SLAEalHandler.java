@@ -62,6 +62,8 @@ public class SLAEalHandler {
     }
     public boolean toDiagonalMatrixMT(ArrayList<ArrayList<BigDecimal>> matrix, ArrayList<BigDecimal> freeTerms){
         int cores = Runtime.getRuntime().availableProcessors();
+        if (cores < 2)
+            return toDiagonalMatrix(matrix,freeTerms);
         for (int i = 0; i < freeTerms.size(); i++){
             if (matrix.get(i).get(i).compareTo(new BigDecimal(0)) == 0)
                 for (int j = i + 1; j < freeTerms.size(); j++)
@@ -81,7 +83,8 @@ public class SLAEalHandler {
     }
     public boolean toDiagonalMatrixOMT(ArrayList<ArrayList<BigDecimal>> matrix, ArrayList<BigDecimal> freeTerms){
         int cores = Runtime.getRuntime().availableProcessors()-1;
-        if (cores < 1) cores = 1;
+        if (cores < 1)
+            return toDiagonalMatrix(matrix,freeTerms);
         for (int i = 0; i < freeTerms.size(); i++){
             if (matrix.get(i).get(i).compareTo(new BigDecimal(0)) == 0)
                 for (int j = i + 1; j < freeTerms.size(); j++)

@@ -9,10 +9,10 @@ public class Main {
 
         long millis = System.nanoTime();
 
-        File file = new File("C:\\Users\\maikl\\Documents\\GitHub\\CMPractice-1\\src\\main\\java\\input.txt");
-        try (Scanner sc = new Scanner(file)){
+        //File file = new File("C:\\Users\\maikl\\Documents\\GitHub\\CMPractice-1\\src\\main\\java\\input.txt");
+        //try (Scanner sc = new Scanner(file)){
 
-            final int n = 250;
+            final int n = 25;
             //final int n = Integer.parseInt(sc.nextLine());
             ArrayList<ArrayList<BigDecimal>> matrix = new ArrayList<>(n);
             ArrayList<BigDecimal> freeTerms = new ArrayList<>(n);
@@ -32,16 +32,17 @@ public class Main {
             SLAEal slae = new SLAEal(matrix, freeTerms);
 
             ///Отображаем созданную матрицу
-            SLAEalHandler.showSLAE(slae);
+            //SLAEalHandler.showSLAE(slae);
 
             ///Вычисляем неизвестные
-            ArrayList<BigDecimal> xs = SLAEalHandler.computeXzg(slae);
+            SLAEalHandler slaEalHandler = new SLAEalHandler();
+            ArrayList<BigDecimal> xs = slaEalHandler.computeXzg(slae);
 
-            for (int i = 0; i < n; i++)
-                System.out.println(((slae.getFreeTerms().get(i).compareTo(new BigDecimal("0")) == -1) ? "" : "+") + slae.getFreeTerms().get(i).setScale(4, RoundingMode.HALF_DOWN));
-        } catch (FileNotFoundException e) {
+        /*} catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+
+         */
 
         System.out.println("Timer of program: " + 1.0*(System.nanoTime() - millis)/1000000);
     }
